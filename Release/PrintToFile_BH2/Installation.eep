@@ -1,0 +1,11 @@
+[Install_00]
+Name_GER	 = ""
+Name_ENG	 = ""
+Name_FRA	 = ""
+Name_POL	 = ""
+Desc_GER	 = ""
+Desc_ENG	 = ""
+Desc_FRA	 = ""
+Desc_POL	 = ""
+Script	 = "Install_00\Install.ini"
+
