@@ -51,13 +51,19 @@ function clearlog()
 end
 
 function error(message, level)
-	if level == nil or level < 1 then
+	if level == nil then
 		level = 1
 	end
-	level = level + 1 -- we don't want our custom error function in the traceback
+	if level > 0 then -- "level 0 avoids the addition of error position information to the message"
+		level = level + 1 -- we don't want our custom error function in the traceback
+	end
 	if pcalllevel <= 0 then
-		local _, fullmessage = oldpcall(olderror, message, level + 1)
-		appendToFile(fullmessage)
+		if level > 0 then
+			local _, fullmessage = oldpcall(olderror, message, level + 1)
+			appendToFile(fullmessage)
+		else
+			appendToFile(message)
+		end
 	end
 	olderror(message, level)
 end
