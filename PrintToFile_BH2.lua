@@ -56,8 +56,8 @@ function error(message, level)
 	end
 	level = level + 1 -- we don't want our custom error function in the traceback
 	if pcalllevel <= 0 then
-		local traceback = debug.traceback(message, level)
-		appendToFile("Error: " .. traceback)
+		local _, fullmessage = oldpcall(olderror, message, level + 1)
+		appendToFile(fullmessage)
 	end
 	olderror(message, level)
 end
