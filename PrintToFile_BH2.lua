@@ -16,10 +16,14 @@ Optionen:
 local FileToPrint = "print.txt"
 local printType = 1
 
+local pcalllevel = 0 -- inside a pcall no error should be printed
+
 local oldprint = print
 local oldclearlog = clearlog
 local olderror = error
 local oldassert = assert
+local oldpcall = pcall
+local oldxpcall = xpcall
 
 function print(...)
 	local file=oldassert(io.open(FileToPrint,"a"))
@@ -43,10 +47,12 @@ end
 function error(message, level)
 	if level == nil or level < 1 then level = 1 end
 	level = level + 1 -- we don't want our custom error function in the traceback
-	local traceback = debug.traceback(message, level)
-	local file=oldassert(io.open(FileToPrint,"a"))
-	file:write("Error: "..traceback)
-	file:close()
+	if pcalllevel <= 0 then
+		local traceback = debug.traceback(message, level)
+		local file=oldassert(io.open(FileToPrint,"a"))
+		file:write("Error: "..traceback)
+		file:close()
+	end
 	olderror(message, level)
 end
 function assert(v, message, ...)
@@ -56,6 +62,17 @@ function assert(v, message, ...)
 	end
 	return oldassert(v, message, ...)
 end
+
+local function callWithIncreasedPcallLevel(func)
+	return function(...)
+		pcalllevel = pcalllevel + 1
+		result = table.pack(func(...))
+		pcalllevel = pcalllevel - 1
+		return table.unpack(result, 1, result.n)
+	end
+end
+pcall = callWithIncreasedPcallLevel(oldpcall)
+xpcall = callWithIncreasedPcallLevel(oldxpcall)
 
 return function(options)
 	for k,v in pairs(options) do
