@@ -12,7 +12,7 @@ Optionen:
 					0: keine Ausgabe
 					1: normale Ausgabe (Standardwert)
 					2: Ausgabe wie in Datei (diese kann sich von der normalen Ausgabe leicht unterscheiden)
-]]--
+]]
 local FileToPrint = "print.txt"
 local printType = 1
 
@@ -25,39 +25,48 @@ local oldassert = assert
 local oldpcall = pcall
 local oldxpcall = xpcall
 
-function print(...)
-	local file=oldassert(io.open(FileToPrint,"a"))
-	local args=table.pack(...)
-	local output=""
-	for i = 1, args.n do
-		output=output..tostring(args[i])
-	end
-	file:write(output.."\n")
+local function appendToFile(text)
+	local file = oldassert(io.open(FileToPrint, "a"))
+	file:write(text .. "\n")
 	file:close()
+end
+
+function print(...)
+	local args = table.pack(...)
+	local output = ""
+	for i = 1, args.n do
+		output = output .. tostring(args[i])
+	end
+	appendToFile(output)
 	if printType == 1 then
 		oldprint(...)
 	elseif printType == 2 then
 		oldprint(output)
 	end
 end
+
 function clearlog()
-	io.open(FileToPrint,"w+"):close()
+	io.open(FileToPrint, "w+"):close()
 	oldclearlog()
 end
+
 function error(message, level)
-	if level == nil or level < 1 then level = 1 end
+	if level == nil or level < 1 then
+		level = 1
+	end
 	level = level + 1 -- we don't want our custom error function in the traceback
 	if pcalllevel <= 0 then
 		local traceback = debug.traceback(message, level)
-		local file=oldassert(io.open(FileToPrint,"a"))
-		file:write("Error: "..traceback)
-		file:close()
+		appendToFile("Error: " .. traceback)
 	end
 	olderror(message, level)
 end
+
 function assert(v, message, ...)
 	if not v then
-		if not message then message = "assertion failed!" end
+		if not message then
+			message = "assertion failed!"
+		end
 		error(message, 2)
 	end
 	return oldassert(v, message, ...)
@@ -75,9 +84,11 @@ pcall = callWithIncreasedPcallLevel(oldpcall)
 xpcall = callWithIncreasedPcallLevel(oldxpcall)
 
 return function(options)
-	for k,v in pairs(options) do
-		if     k == "f" or k == "file" then FileToPrint = v
-		elseif k == "o" or k == "output" then printType = v
+	for k, v in pairs(options) do
+		if k == "f" or k == "file" then
+			FileToPrint = v
+		elseif k == "o" or k == "output" then
+			printType = v
 		end
 	end
 end
